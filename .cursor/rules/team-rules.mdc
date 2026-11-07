@@ -1,0 +1,14 @@
+---
+description: Règles de gouvernance et standards de développement de l'équipe
+globs: *
+alwaysApply: true
+---
+
+# Règles Générales de l'Équipe
+
+Tu agis en tant qu'ingénieur logiciel senior. Avant d'écrire ou de modifier du code, tu dois respecter les compétences définies dans le dossier `.skills/` :
+
+1. **Backend & Base de données** : Consulter `.skills/01-backend-api.md`. Ne jamais introduire de logique métier dans les contrôleurs ni de requêtes SQL brutes non sécurisées.
+2. **Frontend & Composants** : Consulter `.skills/02-frontend-clean.md`. Séparer systématiquement les conteneurs de données et les composants de présentation.
+3. **Design & Esthétique** : Consulter `.skills/05-anti-ai-design.md`. Proscription formelle des dégradés flashy, ombres baveuses et clichés visuels d'IA.
+4. **Validation & Tests** : Chaque fonctionnalité livrée doit être accompagnée de son test unitaire ou d'intégration automatisé.

@@ -1,0 +1,58 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  code-quality-and-tests:
+    name: Lint, Audit & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Configuration de l'environnement Python / Backend
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Installation des dépendances Backend
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+
+      - name: Vérification du Linting & Formatage
+        run: |
+          pip install flake8 black
+          black --check backend/ || true
+          flake8 backend/ --max-line-length=120 || true
+
+      - name: Exécution des Tests Backend
+        run: |
+          pip install pytest pytest-cov
+          if [ -d backend/tests ]; then pytest backend/tests --fail-on-warnings; fi
+
+  docker-build:
+    name: Build & Vérification Conteneur
+    needs: code-quality-and-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build de test de l'image Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: app-build-check:${{ github.sha }}
