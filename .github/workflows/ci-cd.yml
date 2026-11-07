@@ -19,23 +19,38 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Installation des dépendances Backend
         run: |
           python -m pip install --upgrade pip
-          if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+          if [ -f backend/requirements.txt ]; then
+            pip install -r backend/requirements.txt
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "Aucun fichier requirements.txt trouvé pour le moment."
+          fi
 
       - name: Vérification du Linting & Formatage
         run: |
           pip install flake8 black
-          black --check backend/ || true
-          flake8 backend/ --max-line-length=120 || true
+          if [ -d backend ]; then
+            black --check backend/ || true
+            flake8 backend/ --max-line-length=120 || true
+          else
+            echo "Aucun dossier backend à analyser pour le moment."
+          fi
 
       - name: Exécution des Tests Backend
         run: |
           pip install pytest pytest-cov
-          if [ -d backend/tests ]; then pytest backend/tests --fail-on-warnings; fi
+          if [ -d backend/tests ]; then
+            pytest backend/tests --fail-on-warnings
+          elif [ -d tests ]; then
+            pytest tests --fail-on-warnings
+          else
+            echo "Aucun test backend configuré pour le moment."
+          fi
 
   docker-build:
     name: Build & Vérification Conteneur
@@ -46,10 +61,22 @@ jobs:
       - name: Récupérer le code
         uses: actions/checkout@v4
 
+      - name: Vérifier la présence du Dockerfile
+        id: check_dockerfile
+        run: |
+          if [ -f "./Dockerfile" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Aucun Dockerfile à la racine, build Docker ignoré."
+          fi
+
       - name: Configuration de Docker Buildx
+        if: steps.check_dockerfile.outputs.exists == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Build de test de l'image Docker
+        if: steps.check_dockerfile.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
